@@ -3,63 +3,64 @@ import { useForm } from "react-hook-form"
 import Listclima from "./Listclima";
 
 export const Clima =()=>{
-    
-  const { register, handleSubmit ,formState:{errors}} = useForm();
-    const [clima,setclima]=useState([])
+  const { register, handleSubmit, formState: { errors } } = useForm();
+  const [clima, setClima] = useState([]);
+  const [ciudad, setCiudad] = useState("");
 
-    const Api= async (data)=>{
-     try{ 
-   
-      const api=await fetch`http://api.openweathermap.org/data/2.5/forecast?id=524901&appid=af15a1f65c9200187995c5eabbe99dd8&lang=es&q=Bueno Aires`
-       console.log(api)
-      if( api.status){
-        let leer=await api.json()
-        let lista=leer.list
-        console.log(lista)
-        setclima(lista)
-       
-      }else{
-        alert("error")
-      }
-        
-      
-      
-     }catch{
-        alert("Error de pagina")
-     }
+  const Api = async (dato) => {
+  try {
+    const response = await fetch(`http://api.openweathermap.org/data/2.5/forecast?q=${dato}&appid=af15a1f65c9200187995c5eabbe99dd8&lang=es`);
+    if (response.ok) {
+      let data = await response.json();
+      let lista = data.list;
+      setClima(lista);
+    } else {
+      alert("Ciudad no encontrada o error en la solicitud.");
     }
-    const buscar=(e,data)=>{
+  } catch (error) {
+    alert("Error en la página o solicitud fallida.");
+  }
+};
 
-     e.preventDefault()
-     console.log("tet")
+const buscar = (data) => {
+  setCiudad(data.ciudad);
+};
 
-    }
-    useEffect(()=>{
-        Api()
-    },[])
-    
-    
-    console.log(clima)
-    return( 
-   <>
-   <div className="d-flex justify-content-center flex-column">
-    <h1 className="text-center">Escriba el Nombre de su ciudad</h1>
-    <div>
- <form action="" onSubmit={handleSubmit(buscar)}>
-        <input type="text" placeholder="text" name="ciudad" {...register("ciudad")}/>
-        <button className="btn btn-primary" type="Submit"> Buscar</button>
-    </form>
+useEffect(() => {
+  if (ciudad) {
+    Api(ciudad);
+  }
+}, [ciudad]);
+
+return (
+  <>
+    <div className="d-flex justify-content-center flex-column">
+      <h1 className="text-center">Escriba el Nombre de su ciudad</h1>
+      <div>
+        <form onSubmit={handleSubmit(buscar)}>
+          <input
+            type="text"
+            placeholder="Escribe tu ciudad"
+            {...register("ciudad", { required: true })}
+          />
+          {errors.ciudad && <p>Este campo es obligatorio</p>}
+          <button className="btn btn-primary" type="submit">Buscar</button>
+        </form>
+      </div>
     </div>
-    
-   
-   </div>
-   <hr />
-   {
-    clima.map((element)=>(
-      <Listclima key={element.weather.id} description={element.weather[0].description}></Listclima>
-    ))
-   }   
-  
-   </>
-    )
+    <hr />
+    {clima.length > 0 ? (
+      clima.map((element) => (
+        <Listclima
+          key={element.dt}
+          description={element.weather[0].description}
+          tiempo={element.weather[0].main}
+        />
+      ))
+    ) : (
+      <p>No se encontraron resultados.</p>
+    )}
+  </>
+);
+
 }
